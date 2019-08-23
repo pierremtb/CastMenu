@@ -1,19 +1,39 @@
+import pychromecast
+
 class StatusMediaListener:
     def __init__(self, callback):
         self.callback = callback
-
+    
     def new_media_status(self, status):
         self.callback(status)
 
-class Controls(object):
-    def __init__(self, speaker, app):
-        self.previous_volume = speaker.status.volume_level
-        self.volume_offset = 0.02
-        self.speaker = speaker
+class Device(object):
+    
+    volume_offset = 0.02
+
+    def __init__(self, deviceName, app):
+        self.deviceName = deviceName
         self.app = app
 
+        self.connect()
+
+        self.previous_volume = self.speaker.status.volume_level
         listener = StatusMediaListener(self.__onMediaChanged)
-        speaker.media_controller.register_status_listener(listener)
+        self.speaker.media_controller.register_status_listener(listener)
+
+    def connect(self):
+        chromecasts = pychromecast.get_chromecasts()
+        potentialSpeakers = [cc for cc in chromecasts if cc.device.friendly_name == self.deviceName]
+
+        if len(potentialSpeakers) == 0:
+            print("Can't find your device. Quitting...")
+            exit(0)
+
+        self.speaker = potentialSpeakers[0]
+        self.speaker.wait()
+        print(self.speaker.status)
+        print("\nREADY!\n")
+        self.app.title = f"Connected to {self.deviceName}!"
 
     def __onMediaChanged(self, status):
         volume = int(self.__getVolume() * 100)
@@ -22,7 +42,7 @@ class Controls(object):
         if status.player_is_paused:
             title += " (:)"
             playButtonText = "Play"
-        self.app.updateData(title, playButtonText, volume)
+        self.app.updateData(self.deviceName, title, playButtonText, volume)
 
     def __setVolume(self, volume):
         self.speaker.set_volume(volume)
