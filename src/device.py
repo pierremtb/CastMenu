@@ -18,7 +18,8 @@ class Device(object):
         
 
     def connect(self):
-        self.app.title = f"Connecting to {self.app.deviceName}…"
+        # self.app.title = f"Connecting to {self.app.deviceName}…"
+        self.app.title = ""
 
         self.app.chromecasts = pychromecast.get_chromecasts()
         potentialSpeakers = [cc for cc in self.app.chromecasts if cc.device.friendly_name == self.app.deviceName]
@@ -32,7 +33,7 @@ class Device(object):
         self.speaker.wait()
         print(self.speaker.status)
         print("\nREADY!\n")
-        self.app.title = f"Connected to {self.app.deviceName}!"
+        # self.app.title = f"Connected to {self.app.deviceName}!"
 
         self.previous_volume = self.__getVolume()
         listener = StatusMediaListener(self.__onMediaChanged)
@@ -47,12 +48,9 @@ class Device(object):
 
     def __onMediaChanged(self, status):
         volume = int(self.__getVolume() * 100)
-        title = f"{status.artist} — {status.title}"
-        playButtonText = "Pause"
-        if status.player_is_paused:
-            title += " (:)"
-            playButtonText = "Play"
-        self.app.updateData(self.app.deviceName, title, playButtonText, volume)
+        if status.artist != None and status.title != None:
+            title = f"{status.artist} > {status.title}"
+        self.app.updateData(self.app.deviceName, title, status.player_is_paused, volume)
 
     def __setVolume(self, volume):
         self.sendAction(lambda: self.speaker.set_volume(volume))
