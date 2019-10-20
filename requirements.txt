@@ -1,0 +1,2 @@
+keyboard==0.13.4
+PyChromecast==4.1.0
